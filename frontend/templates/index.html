@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="main_container">
+    <h6>Image Upload</h6>
+    <h4>Test code</h4>
+    <div>
+        <form action="/upload" method="post" enctype="multipart/form-data">
+            <input type="file" name="file">
+            <input type="submit" value="Upload">
+        </form>
+    </div>
+    {{result}}
+</div>
+
+<div class="main_container">
+    <div class="main_container_inner_content">
+        <div class="inner_block_item">
+            <div class="card_image">
+                <img src="/static/images/parking-spot.png">
+            </div>
+            <h5>Seamless access</h5>
+            <p>Open access gates by simply driving up to the gate. With no swipe cards needed, you have low-touch, easy
+                access, removing congestion at the entry.</p>
+        </div>
+        <div class="inner_block_item">
+            <div class="card_image">
+                <img src="/static/images/plates-db.png">
+            </div>
+            <h5>Heightened security</h5>
+            <p>Limit car park access to an approved list of vehicles. Cameras record each vehicle so you know who has
+                accessed your car park and for how long</p>
+        </div>
+        <div class="inner_block_item">
+            <div class="card_image">
+                <img src="/static/images/reporting.png">
+            </div>
+            <h5>Automated reporting</h5>
+            <p>ANPR cameras track which vehicles are in the car park, giving you automated, real-time information and
+                reporting through the Parkable admin panel</p>
+        </div>
+    </div>
+</div>
+
+<div class="main_container">
+    <div class="main_container_by_side">
+        <div class="main_container_by_image">
+            <img src="/static/images/camera.png">
+        </div>
+        <div class="main_container_by_text">
+            <h6>HARDWARE</h6>
+            <h4>Cameras and access control</h4>
+            <div>
+                <p>Parkable will provide industry leading ANPR cameras and proprietary gate controllers selected
+                    specifically for the location. The ANPR camera and Parkable platform is compatible with any
+                    industry-standard access gates/barriers.</p>
+                <p><br>If you have pre-existing ANPR cameras <a
+                        href="https://parkable.com/request-an-integration"><strong>contact us</strong></a> to
+                    discuss
+                    integration options.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="main_container">
+    <div class="main_container_by_side">
+        <div class="main_container_by_image">
+            <img src="/static/images/management.png">
+        </div>
+        <div class="main_container_by_text">
+            <h6>ENTERPRISE</h6>
+            <h4>Fleet vehicle management</h4>
+            <div>
+                <p>Use ANPR to simplify car park access for your fleet and gain oversight of which vehicles are
+                    available or offsite at any given time.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="main_container">
+    <div class="main_container_by_side">
+        <div class="main_container_by_image">
+            <img src="/static/images/price.png">
+        </div>
+        <div class="main_container_by_text">
+            <h6>PAYMENT</h6>
+            <h4>Charge for casual and long-term parking</h4>
+            <div>
+                <p>If you offer paid parking, the Parkable app processes credit card payments while licence plate
+                    recognition
+                    ensures that parkers are appropriately charged for time spent in the car park. There are
+                    flexible
+                    access and
+                    payment options for both your staff and tenants, and for members of the public.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+
+
+{% endblock %}
