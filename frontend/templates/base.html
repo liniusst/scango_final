@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <style>
+        .top_header {
+            background-color: #f7f7f7;
+            padding: 5px;
+            margin-top: 15px;
+            border-radius: 5px;
+        }
+
+        .main_container_inner_content {
+            display: flex;
+            justify-content: space-around;
+            align-items: baseline;
+            width: 100%;
+            padding-top: 45px;
+        }
+
+        .inner_block_item {
+            width: 30%;
+            max-width: 320px;
+        }
+
+        .inner_block_item .card_image {
+            display: block;
+            margin: 0 auto;
+            text-align: left;
+        }
+
+        .main_container {
+            background-color: #f7f7f7;
+            padding: 30px;
+            border-radius: 5px;
+            margin-top: 30px;
+            box-sizing: border-box;
+        }
+
+        .main_container_by_side {
+            flex-direction: row;
+            padding: 27px 62px;
+            box-sizing: border-box;
+            margin: 0 auto;
+            max-width: 1200px;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+        }
+
+        .main_container_by_text {
+            max-width: 540px;
+            width: 50%;
+            padding: 0 20px;
+            box-sizing: border-box;
+        }
+
+        .main_container_by_image {
+            width: 45%;
+        }
+
+        img {
+            width: 100%;
+            padding: 0 20px;
+            box-sizing: border-box;
+        }
+
+        h6 {
+            text-transform: uppercase;
+            font-size: 14px;
+            letter-spacing: .6px;
+            border-radius: 3px;
+            padding: 5px 14px 3px;
+            background: #dedede;
+            display: inline-block;
+        }
+
+        .top_nav {
+            background-color: var(--color-secondary);
+            padding: 10px;
+        }
+
+        .top_nav_button {
+            border-radius: 20px;
+            position: relative;
+            text-align: left;
+            padding-left: 30px;
+        }
+
+        .IntegrationsBlock_side_by_side_image__JZa7k {
+            text-align: left;
+            width: 40%;
+        }
+
+
+        .h2,
+        .h2 *,
+        h2,
+        h2 * {
+            font-feature-settings: "salt" on, "ss01" on, "liga" off;
+            font-size: 64px;
+            font-weight: 800;
+            letter-spacing: -.02em;
+            line-height: 75px;
+        }
+
+
+        .label {
+            font-weight: bold;
+        }
+
+        #status_text {
+            z-index: 1;
+            position: absolute;
+            top: 180px;
+            left: 660px;
+            font-size: 200px;
+            opacity: 0.5;
+        }
+
+
+        .centered-wrapper {
+            position: relative;
+            text-align: center;
+        }
+
+        .centered-content {
+            display: inline-block;
+            vertical-align: middle;
+        }
+    </style>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>Hangman game</title>
+
+    <!-- Bootstrap core CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css"
+        integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+
+
+</head>
+
+<body>
+
+    <div class="page-body">
+        <div class="container">
+            <div class="top_header">
+                <div class="top_nav">
+                    <div class="top_nav_button">
+                        <a href="/">Home</a>
+                        <a href="/ocr">OCR</a>
+                    </div>
+                </div>
+            </div>
+            <br>
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category }}">
+                {{ message }}
+            </div>
+            {% endfor %}
+            {% endif %}
+            {% endwith %}
+            {% block content %}
+            {% endblock %}
+        </div>
+
+
+        <!-- Bootstrap core JavaScript -->
+        <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
+            integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
+            crossorigin="anonymous"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js"
+            integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49"
+            crossorigin="anonymous"></script>
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js"
+            integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy"
+            crossorigin="anonymous"></script>
+    </div>
+</body>
+
+</html>
