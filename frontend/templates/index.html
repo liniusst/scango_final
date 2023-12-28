@@ -3,16 +3,37 @@
 {% block content %}
 
 <div class="main_container">
-    <h6>Image Upload</h6>
-    <h4>Test code</h4>
+    <h6>Image or video upload</h6>
     <div>
         <form action="/upload" method="post" enctype="multipart/form-data">
             <input type="file" name="file">
             <input type="submit" value="Upload">
         </form>
     </div>
-    {{result}}
+
+    {% if result %}
+    <div>
+        <h4>Results:</h4>
+        <table style="border-collapse: collapse; width: 100%; border: 1px solid #ddd; border-radius: 5px;">
+            <thead>
+                <tr>
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Plate Number</th>
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Confidence Level</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for entry in result %}
+                <tr>
+                    <td style="border: 1px solid #ddd; padding: 8px;">{{ entry['plate_number'] }}</td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">{{ entry['confidence_level'] }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
 </div>
+
 
 <div class="main_container">
     <div class="main_container_inner_content">
