@@ -2,7 +2,6 @@ from ultralytics import YOLO
 import os
 import cv2
 import easyocr
-from itertools import chain
 import numpy as np
 import torch
 import csv
@@ -20,12 +19,10 @@ class detect_license_plate:
 
     def _process_detection(self, frame, box):
         x1, y1, x2, y2, track_id, score = box
-
         region_of_interest = frame[int(y1) : int(y2) + 5, int(x1) : int(x2)]
         gray_frame = cv2.cvtColor(region_of_interest, cv2.COLOR_BGR2GRAY)
         _, thresholded = cv2.threshold(gray_frame, 64, 255, cv2.THRESH_BINARY_INV)
 
-        # Apply morphological closing
         kernel = np.ones((3, 3), np.uint8)
         morphology = cv2.morphologyEx(
             thresholded,
@@ -63,7 +60,6 @@ class detect_license_plate:
                 license_plates += text
 
             text = text.upper().replace(" ", "")
-            plate_number = "".join(chain.from_iterable(text)) if text else None
             score = np.round(np.mean(score), 2)
 
             result = {
@@ -124,7 +120,7 @@ class detect_license_plate:
         return all_results
 
 
-# if __name__ == "__main__":
-#     video_path = "images/2.jpeg"
-#     license_plate_detector = detect_license_plate(conf_score=0.45)
-#     license_plate_detector.process_video(video_path)
+if __name__ == "__main__":
+    video_path = "images/5.jpg"
+    license_plate_detector = detect_license_plate(conf_score=0.01)
+    license_plate_detector.process_video(video_path)
