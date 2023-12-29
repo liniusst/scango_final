@@ -1,21 +1,22 @@
 from ultralytics import YOLO
 import os
 import cv2
-import easyocr
 import numpy as np
 import torch
 import csv
+from paddleocr import PaddleOCR, draw_ocr, download_with_progressbar
 
 torch.device("cpu")
 model_path = os.path.join(".", "weights", "best.pt")
 model = YOLO(model_path)
+np.int = np.int_
 
 
 class detect_license_plate:
     def __init__(self, conf_score) -> None:
         self.allow_list = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-        self.reader = easyocr.Reader(["en"], gpu=False, verbose=False)
         self.conf_score = conf_score
+        self.ocr = PaddleOCR(use_angle_cls=True, lang="en")
 
     def _process_detection(self, frame, box):
         x1, y1, x2, y2, track_id, score = box
@@ -47,24 +48,30 @@ class detect_license_plate:
                 writer.writerow(result)
 
     def _read_license_plate(self, img_tresh):
-        output = self.reader.readtext(
-            np.vstack(img_tresh), allowlist=self.allow_list, paragraph=False
-        )
+        result = self.ocr.ocr(img_tresh, cls=True)
 
         license_plates = ""
+        confidence_scores = []
 
-        for detection in output:
-            bbox, text, score = detection
+        result = sorted(result, key=lambda x: x[0][0][0])
+
+        for detection in result:
+            bbox = detection[0]
+            text, score = detection[1]
 
             if score >= self.conf_score:
                 license_plates += text
+                confidence_scores.append(score)
 
-            text = text.upper().replace(" ", "")
-            score = np.round(np.mean(score), 2)
+            license_plates = license_plates.upper().replace(" ", "")
+
+            avg_confidence = (
+                np.round(np.mean(confidence_scores), 2) if confidence_scores else 0.0
+            )
 
             result = {
                 "plate_number": license_plates,
-                "confidence_level": score,
+                "confidence_level": avg_confidence,
             }
 
         return result
@@ -95,19 +102,6 @@ class detect_license_plate:
 
             for box in detections.boxes.data.tolist():
                 img_tresh = self._process_detection(frame, box)
-
-                cnts, _ = cv2.findContours(
-                    np.vstack(img_tresh).astype(np.uint8),
-                    cv2.RETR_EXTERNAL,
-                    cv2.CHAIN_APPROX_SIMPLE,
-                )
-
-                if cnts:
-                    cnt = max(cnts, key=cv2.contourArea)
-                    x, y, w, h = cv2.boundingRect(cnt)
-                else:
-                    break
-
                 results = self._read_license_plate(img_tresh)
                 confidence_level = results.get("confidence_level")
 
