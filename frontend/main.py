@@ -3,7 +3,7 @@ from flask_bcrypt import Bcrypt
 import os
 import sys
 
-sys.path.insert(0, "C:/ANPR/scango_final/")
+# sys.path.insert(0, "C:/ANPR/scango_final/")
 from detection.app import detect_license_plate
 
 
