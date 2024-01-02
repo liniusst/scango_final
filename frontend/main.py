@@ -41,7 +41,7 @@ def upload_file():
         file_path = os.path.join(app.config["UPLOAD_FOLDER"], file.filename)
         file.save(file_path)
 
-        license_plate_detector = detect_license_plate(conf_score=0.75)
+        license_plate_detector = detect_license_plate(conf_score=0.01)
         ocr_result = license_plate_detector.process_video(file_path)
 
         return render_template("index.html", result=ocr_result)
