@@ -5,8 +5,11 @@ import numpy as np
 import torch
 from paddleocr import PaddleOCR
 import time
-from sort.sort import Sort
+from detection.sort.sort import Sort
 import threading
+import sys
+
+sys.path.insert(0, "C:/ANPR/scango_final/")
 
 torch.device("cpu")
 car_model_path = os.path.join(".", "weights", "yolov8n.pt")
@@ -156,6 +159,7 @@ class detect_license_plate:
                     print(results)
             frame_nmb += 1
         video.release()
+        return results
 
 
 if __name__ == "__main__":
