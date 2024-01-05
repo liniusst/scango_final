@@ -5,8 +5,8 @@ import numpy as np
 import torch
 from paddleocr import PaddleOCR
 import time
-from sort.sort import *
-
+from sort.sort import Sort
+import threading
 
 torch.device("cpu")
 car_model_path = os.path.join(".", "weights", "yolov8n.pt")
@@ -21,16 +21,15 @@ np.int = np.int_
 class detect_license_plate:
     def __init__(self, conf_score: float, max_frames: int) -> None:
         self.conf_score = conf_score
-        self.ocr = PaddleOCR(
-            use_angle_cls=True, lang="en", show_log=False, cls_thresh=0.8
-        )
         self.motion_tracker = Sort()
         self.vehicle_ids = [2, 3, 5, 7]
         self.max_frames = max_frames
+        self.ocr = None
+        self.init_thread = threading.Thread(target=self._initialize_ocr)
+        self.init_thread.start()
 
     def _process_thresholded(self, region_of_interest):
         gray_frame = cv2.cvtColor(region_of_interest, cv2.COLOR_BGR2GRAY)
-
         _, thresholded = cv2.threshold(gray_frame, 64, 255, cv2.THRESH_BINARY_INV)
 
         kernel = np.ones((3, 3), np.uint8)
@@ -40,7 +39,15 @@ class detect_license_plate:
 
         return tresh_morphology
 
+    def _initialize_ocr(self):
+        if self.ocr is None:
+            self.ocr = PaddleOCR(
+                use_angle_cls=True, lang="en", show_log=False, cls_thresh=0.8
+            )
+
     def _read_license_plate(self, img_tresh):
+        if self.init_thread.is_alive():
+            self.init_thread.join()
         result = self.ocr.ocr(img_tresh, cls=True)
 
         license_plates = ""
@@ -146,7 +153,7 @@ class detect_license_plate:
                             },
                         }
 
-                print(results)
+                    print(results)
             frame_nmb += 1
         video.release()
 
