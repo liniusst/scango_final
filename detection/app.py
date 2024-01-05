@@ -3,149 +3,162 @@ import os
 import cv2
 import numpy as np
 import torch
-import csv
-from paddleocr import PaddleOCR, draw_ocr, download_with_progressbar
+from paddleocr import PaddleOCR
 import time
+from sort.sort import *
 
 
 torch.device("cpu")
+car_model_path = os.path.join(".", "weights", "yolov8n.pt")
+car_model = YOLO(car_model_path)
+
 model_path = os.path.join(".", "weights", "best.pt")
 model = YOLO(model_path)
+
 np.int = np.int_
 
 
 class detect_license_plate:
-    def __init__(self, conf_score) -> None:
-        self.allow_list = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    def __init__(self, conf_score: float, max_frames: int) -> None:
         self.conf_score = conf_score
         self.ocr = PaddleOCR(
             use_angle_cls=True, lang="en", show_log=False, cls_thresh=0.8
         )
+        self.motion_tracker = Sort()
+        self.vehicle_ids = [2, 3, 5, 7]
+        self.max_frames = max_frames
 
-    def _process_detection(self, frame, box):
-        try:
-            x1, y1, x2, y2, track_id, score = box
-            region_of_interest = frame[int(y1) : int(y2) + 5, int(x1) : int(x2)]
-            gray_frame = cv2.cvtColor(region_of_interest, cv2.COLOR_BGR2GRAY)
-            _, thresholded = cv2.threshold(gray_frame, 64, 255, cv2.THRESH_BINARY_INV)
+    def _process_thresholded(self, region_of_interest):
+        gray_frame = cv2.cvtColor(region_of_interest, cv2.COLOR_BGR2GRAY)
+        # adaptive_thresholded = cv2.adaptiveThreshold(
+        #     gray_frame, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY_INV, 11, 4
+        # )
+        _, thresholded = cv2.threshold(gray_frame, 64, 255, cv2.THRESH_BINARY_INV)
 
-            kernel = np.ones((3, 3), np.uint8)
-            morphology = cv2.morphologyEx(
-                thresholded,
-                cv2.MORPH_CLOSE,
-                kernel,
-                iterations=2,
-            )
+        kernel = np.ones((3, 3), np.uint8)
+        tresh_morphology = cv2.morphologyEx(
+            thresholded, cv2.MORPH_CLOSE, kernel, iterations=2
+        )
 
-            return morphology
-        except Exception as e:
-            print(f"An error occurred: {e}")
-            return None
+        # Display the final result
+        cv2.imshow("Final Result", tresh_morphology)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
 
-    def _write_csv(self, results, output_path):
-        try:
-            file_exists = os.path.exists(output_path)
-
-            with open(output_path, "a", newline="") as f:
-                fieldnames = ["plate_number", "confidence_level"]
-                writer = csv.DictWriter(f, fieldnames=fieldnames)
-
-                if not file_exists:
-                    writer.writeheader()
-
-                for result in results:
-                    writer.writerow(result)
-
-        except Exception as e:
-            print(f"An error occurred while writing to CSV: {e}")
+        return tresh_morphology
 
     def _read_license_plate(self, img_tresh):
-        try:
-            result = self.ocr.ocr(img_tresh, cls=True)
+        result = self.ocr.ocr(img_tresh, cls=True)
 
-            license_plates = ""
-            confidence_scores = []
+        license_plates = ""
+        confidence_scores = []
 
-            result = sorted(result, key=lambda x: x[0][0][0])
+        result = sorted(result, key=lambda x: x[0][0][0])
 
-            for detection in result:
-                bbox = detection[0]
-                text, score = detection[1]
+        for detection in result:
+            bbox = detection[0]
+            text, score = detection[1]
 
-                if score >= self.conf_score:
-                    license_plates += text
-                    confidence_scores.append(score)
+            if score >= self.conf_score:
+                license_plates += text
+                confidence_scores.append(score)
 
-            license_plates = license_plates.upper().replace(" ", "")
+        license_plates = license_plates.upper().replace(" ", "")
 
-            avg_confidence = (
-                np.round(np.mean(confidence_scores), 2) if confidence_scores else 0.0
-            )
+        avg_confidence = (
+            np.round(np.mean(confidence_scores), 2) if confidence_scores else 0.0
+        )
 
-            result = {
-                "plate_number": license_plates,
-                "confidence_level": avg_confidence,
-            }
+        return license_plates, avg_confidence
 
-            return result
+    def _map_car(self, plate, tracking_ids):
+        x1, y1, x2, y2, score, class_id = plate
 
-        except Exception as e:
-            print(f"An error occurred while reading license plate: {e}")
-            return None
+        for j in range(len(tracking_ids)):
+            x1car, y1car, x2car, y2car, car_id = tracking_ids[j]
+
+            if x1 > x1car and y1 > y1car and x2 < x2car and y2 < y2car:
+                car_index = j
+                return tracking_ids[car_index]
+
+        return -1, -1, -1, -1, -1
+
+    def _check_status(self, result) -> bool:
+        if result is not None:
+            license_number, license_number_score = result
+        else:
+            license_number, license_number_score = "-1", "-1"
+
+        if license_number != "-1" and float(license_number_score) >= self.conf_score:
+            status = True
+        else:
+            status = False
+
+        return status, license_number, license_number_score
 
     def process_video(self, video_path):
-        try:
-            video = cv2.VideoCapture(video_path)
+        video = cv2.VideoCapture(video_path)
+        results = {}
 
-            ret = True
-            frame_number = -1
+        frame_nmb = 0
+        ret = True
 
-            fps = video.get(cv2.CAP_PROP_FPS)
-            desired_fps = 3
-            frame_interval = int(round(fps / desired_fps))
+        while ret and frame_nmb < self.max_frames:
+            ret, frame = video.read()
+            if not ret:
+                break
 
-            all_results = []
+            results[frame_nmb] = {}
 
             start_time = time.time()
 
-            while ret:
-                frame_number += 1
-                ret, frame = video.read()
-                if not ret:
-                    break
+            with torch.no_grad():
+                vehicles = car_model(frame)[0]
 
-                if frame_number % frame_interval != 0:
-                    continue
+            vehicles_list = []
+            for vehicle in vehicles.boxes.data.tolist():
+                x1, y1, x2, y2, vehicle_bbox_score, class_id = vehicle
+                if int(class_id) in self.vehicle_ids:
+                    vehicles_list.append([x1, y1, x2, y2, vehicle_bbox_score])
+                    vehicle_bbox_score = np.round(np.mean(vehicle_bbox_score), 2)
 
-                with torch.no_grad():
-                    detections = model(frame)[0]
+            tracking_ids = self.motion_tracker.update(np.asarray(vehicles_list))
 
-                for box in detections.boxes.data.tolist():
-                    img_tresh = self._process_detection(frame, box)
-                    results = self._read_license_plate(img_tresh)
-                    confidence_level = results.get("confidence_level")
+            with torch.no_grad():
+                plates = model(frame)[0]
 
-                    if confidence_level >= self.conf_score:
-                        all_results.append(results)
-                        self._write_csv(all_results, "./results.csv")
-                    else:
-                        break
+            for plate in plates.boxes.data.tolist():
+                x1, y1, x2, y2, score, class_id = plate
 
-            end_time = time.time()
-            processing_time = end_time - start_time
-            print(f"Processing time: {processing_time:.2f} seconds")
+                x1car, y1car, x2car, y2car, car_id = self._map_car(plate, tracking_ids)
+                if car_id != -1:
+                    region_of_interest = frame[int(y1) : int(y2), int(x1) : int(x2)]
 
-        except Exception as e:
-            print(f"An error occurred during video processing: {e}")
-            return None
+                    tresh_img = self._process_thresholded(region_of_interest)
+                    result = self._read_license_plate(tresh_img)
 
-        finally:
-            video.release()
+                    status = self._check_status(result)
+                    bool_status, license_number, license_number_score = status
 
-        return all_results
+                    end_time = time.time()
+                    detection_time = round((end_time - start_time) * 1000, 2)
+
+                    if bool_status:
+                        results[frame_nmb][car_id] = {
+                            "plate": {
+                                "license_plate": license_number,
+                                "vehicle_conf_score": vehicle_bbox_score,
+                                "plate_conf_score": license_number_score,
+                                "detection_time": detection_time,
+                            },
+                        }
+
+                print(results)
+            frame_nmb += 1
+        video.release()
 
 
 if __name__ == "__main__":
-    video_path = "images/2.jpeg"
-    license_plate_detector = detect_license_plate(conf_score=0.01)
+    video_path = "detection/video.mp4"
+    license_plate_detector = detect_license_plate(conf_score=0.91, max_frames=4)
     license_plate_detector.process_video(video_path)
