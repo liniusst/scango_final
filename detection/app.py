@@ -38,11 +38,6 @@ class detect_license_plate:
             thresholded, cv2.MORPH_CLOSE, kernel, iterations=2
         )
 
-        # Display the final result
-        cv2.imshow("Final Result", tresh_morphology)
-        cv2.waitKey(0)
-        cv2.destroyAllWindows()
-
         return tresh_morphology
 
     def _read_license_plate(self, img_tresh):
