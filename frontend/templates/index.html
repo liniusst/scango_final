@@ -17,19 +17,22 @@
         <table style="border-collapse: collapse; width: 100%; border: 1px solid #ddd; border-radius: 5px;">
             <thead>
                 <tr>
-                    <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Plate Number</th>
-                    <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Confidence Level</th>
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">License Plate</th>
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Vehicle Confidence Level</th>
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Plate Confidence Level</th>
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Detection Time</th>
                 </tr>
             </thead>
             <tbody>
-                {% for entry in result %}
                 <tr>
-                    <td style="border: 1px solid #ddd; padding: 8px;">{{ entry['plate_number'] }}</td>
-                    <td style="border: 1px solid #ddd; padding: 8px;">{{ entry['confidence_level'] }}</td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">{{ result['plate']['license_plate'] }}</td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">{{ result['plate']['vehicle_conf_score'] }}</td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">{{ result['plate']['plate_conf_score'] }}</td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">{{ result['plate']['detection_time'] }}</td>
                 </tr>
-                {% endfor %}
             </tbody>
         </table>
+
     </div>
     {% endif %}
 </div>
