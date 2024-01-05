@@ -30,9 +30,7 @@ class detect_license_plate:
 
     def _process_thresholded(self, region_of_interest):
         gray_frame = cv2.cvtColor(region_of_interest, cv2.COLOR_BGR2GRAY)
-        # adaptive_thresholded = cv2.adaptiveThreshold(
-        #     gray_frame, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY_INV, 11, 4
-        # )
+
         _, thresholded = cv2.threshold(gray_frame, 64, 255, cv2.THRESH_BINARY_INV)
 
         kernel = np.ones((3, 3), np.uint8)
