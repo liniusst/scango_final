@@ -1,15 +1,15 @@
-from ultralytics import YOLO
-import os
+import time
+
 import cv2
 import numpy as np
-import torch
-from paddleocr import PaddleOCR
-import time
-from detection.sort.sort import Sort
+import os
 import threading
-import sys
+import torch
+from crud.license_plate_crud import create_plates, get_all_plates
+from paddleocr import PaddleOCR
+from sort.sort import Sort
+from ultralytics import YOLO
 
-sys.path.insert(0, "C:/ANPR/scango_final/")
 
 torch.device("cpu")
 car_model_path = os.path.join(".", "weights", "yolov8n.pt")
@@ -20,10 +20,13 @@ model = YOLO(model_path)
 
 np.int = np.int_
 
+# create_plates("Linas", "KQX367O")
+
 
 class detect_license_plate:
-    def __init__(self, conf_score: float, max_frames: int) -> None:
+    def __init__(self, conf_score: float, max_frames: int, similarity: float) -> None:
         self.conf_score = conf_score
+        self.similarity = similarity
         self.motion_tracker = Sort()
         self.vehicle_ids = [2, 3, 5, 7]
         self.max_frames = max_frames
@@ -86,6 +89,25 @@ class detect_license_plate:
 
         return -1, -1, -1, -1, -1
 
+    def _jaccard_similarity(self, np_one: str, np_two: str) -> float:
+        set1 = set(np_one)
+        set2 = set(np_two)
+
+        intersection_len = len(set1.intersection(set2))
+        union_len = len(set1.union(set2))
+
+        similarity = round(intersection_len / union_len if union_len != 0 else 0, 2)
+        return similarity
+
+    def _check_license_plate_similarity(self, np_db: str, np_ocr: str):
+        similarity = self._jaccard_similarity(np_db, np_ocr)
+
+        if similarity >= self.similarity:
+            status = True
+        else:
+            status = False
+        return status, similarity
+
     def _check_status(self, result) -> bool:
         if result is not None:
             license_number, license_number_score = result
@@ -143,6 +165,18 @@ class detect_license_plate:
                     status = self._check_status(result)
                     bool_status, license_number, license_number_score = status
 
+                    all_plates = get_all_plates()
+
+                    for plate in all_plates:
+                        status, similarity = self._check_license_plate_similarity(
+                            plate.license_plate, license_number
+                        )
+                        if status:
+                            print("atidarom")
+                        else:
+                            continue
+                        # print(status, similarity)
+
                     end_time = time.time()
                     detection_time = round((end_time - start_time) * 1000, 2)
 
@@ -163,6 +197,10 @@ class detect_license_plate:
 
 
 if __name__ == "__main__":
-    video_path = "detection/video.mp4"
-    license_plate_detector = detect_license_plate(conf_score=0.91, max_frames=4)
+    video_path = "video.mp4"
+    license_plate_detector = detect_license_plate(
+        conf_score=0.91,
+        max_frames=4,
+        similarity=0.70,
+    )
     license_plate_detector.process_video(video_path)
