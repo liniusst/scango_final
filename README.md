@@ -1,4 +1,5 @@
 # scango_final
+importanize
 
 **scango_final** is a Python project that combines YOLO (You Only Look Once) for object detection, the SORT (Simple Online and Realtime Tracking) algorithm for tracking, and PaddleOCR for license plate recognition. This project aims to detect and track vehicles, recognize license plates, and provide associated information.
 
@@ -6,9 +7,6 @@
 
 - [Overview](#overview)
 - [Dependencies](#dependencies)
-- [Installation](#installation)
-- [Usage](#usage)
-- [License](#license)
 
 ## Overview
 
@@ -22,7 +20,7 @@ The project uses YOLO for vehicle detection, SORT for tracking, and PaddleOCR fo
 
 Ensure you have the following dependencies installed:
 
-- [Ultralytics YOLO](https://github.com/ultralytics/yolov5): YOLO implementation for object detection.
+- [Ultralytics YOLO](https://github.com/ultralytics/ultralytics): YOLO implementation for object detection.
 - [PaddleOCR](https://github.com/PaddlePaddle/PaddleOCR): OCR library for license plate recognition.
 - [SORT](https://github.com/abewley/sort): SORT algorithm for object tracking.
 - OpenCV
@@ -50,7 +48,7 @@ Ensure you have the following dependencies installed:
                 'license_plate': 'B2228HM',
                 'vehicle_conf_score': 0.35,
                 'plate_conf_score': 0.99,
-                'detection_time': 8262.44
+                'detection_time': 504.93
             }
         }
     }
