@@ -108,7 +108,7 @@ class detect_license_plate:
             status = False
         return status, similarity
 
-    def _check_status(self, result) -> bool:
+    def _check_np_pass_status(self, result) -> bool:
         if result is not None:
             license_number, license_number_score = result
         else:
@@ -120,6 +120,19 @@ class detect_license_plate:
             status = False
 
         return status, license_number, license_number_score
+
+    def _check_np_db(self, np_status):
+        bool_status, license_number, license_number_score = np_status
+        all_plates = get_all_plates()
+        for plate in all_plates:
+            status, similarity = self._check_license_plate_similarity(
+                plate.license_plate, license_number
+            )
+            if status:
+                print("atidarom")
+                break
+            else:
+                continue
 
     def process_video(self, video_path):
         video = cv2.VideoCapture(video_path)
@@ -162,33 +175,22 @@ class detect_license_plate:
                     tresh_img = self._process_thresholded(region_of_interest)
                     result = self._read_license_plate(tresh_img)
 
-                    status = self._check_status(result)
-                    bool_status, license_number, license_number_score = status
+                    np_status = self._check_np_pass_status(result)
+                    self._check_np_db(np_status)
 
-                    all_plates = get_all_plates()
-
-                    for plate in all_plates:
-                        status, similarity = self._check_license_plate_similarity(
-                            plate.license_plate, license_number
-                        )
-                        if status:
-                            print("atidarom")
-                        else:
-                            continue
-                        # print(status, similarity)
+                    bool_status, license_number, license_number_score = np_status
 
                     end_time = time.time()
                     detection_time = round((end_time - start_time) * 1000, 2)
 
-                    if bool_status:
-                        results[frame_nmb][car_id] = {
-                            "plate": {
-                                "license_plate": license_number,
-                                "vehicle_conf_score": vehicle_bbox_score,
-                                "plate_conf_score": license_number_score,
-                                "detection_time": detection_time,
-                            },
-                        }
+                    results[frame_nmb][car_id] = {
+                        "plate": {
+                            "license_plate": license_number,
+                            "vehicle_conf_score": vehicle_bbox_score,
+                            "plate_conf_score": license_number_score,
+                            "detection_time": detection_time,
+                        },
+                    }
 
                     print(results)
             frame_nmb += 1
