@@ -24,12 +24,12 @@ np.int = np.int_
 
 
 class detect_license_plate:
-    def __init__(self, conf_score: float, max_frames: int, similarity: float) -> None:
+    def __init__(self, conf_score: float, max_fps: int, similarity: float) -> None:
         self.conf_score = conf_score
         self.similarity = similarity
         self.motion_tracker = Sort()
         self.vehicle_ids = [2, 3, 5, 7]
-        self.max_frames = max_frames
+        self.max_fps = max_fps
         self.ocr = None
         self.init_thread = threading.Thread(target=self._initialize_ocr)
         self.init_thread.start()
@@ -140,60 +140,53 @@ class detect_license_plate:
 
         frame_nmb = 0
         ret = True
+        interval = int(round(video.get(cv2.CAP_PROP_FPS) / self.max_fps))
+        pass_car = False
 
-        while ret and frame_nmb < self.max_frames:
+        while ret and not pass_car:
             ret, frame = video.read()
+
             if not ret:
                 break
 
-            results[frame_nmb] = {}
-
             start_time = time.time()
+            if frame_nmb % interval == 0:
+                with torch.no_grad():
+                    plates = model(frame)[0]
 
-            with torch.no_grad():
-                vehicles = car_model(frame)[0]
+                for plate in plates.boxes.data.tolist():
+                    x1, y1, x2, y2, score, class_id = plate
 
-            vehicles_list = []
-            for vehicle in vehicles.boxes.data.tolist():
-                x1, y1, x2, y2, vehicle_bbox_score, class_id = vehicle
-                if int(class_id) in self.vehicle_ids:
-                    vehicles_list.append([x1, y1, x2, y2, vehicle_bbox_score])
-                    vehicle_bbox_score = np.round(np.mean(vehicle_bbox_score), 2)
-
-            tracking_ids = self.motion_tracker.update(np.asarray(vehicles_list))
-
-            with torch.no_grad():
-                plates = model(frame)[0]
-
-            for plate in plates.boxes.data.tolist():
-                x1, y1, x2, y2, score, class_id = plate
-
-                x1car, y1car, x2car, y2car, car_id = self._map_car(plate, tracking_ids)
-                if car_id != -1:
                     region_of_interest = frame[int(y1) : int(y2), int(x1) : int(x2)]
 
                     tresh_img = self._process_thresholded(region_of_interest)
                     result = self._read_license_plate(tresh_img)
 
-                    np_status = self._check_np_pass_status(result)
-                    self._check_np_db(np_status)
+                    pass_status = self._check_np_pass_status(result)
+                    pass_result, license_number, license_number_score = pass_status
 
-                    bool_status, license_number, license_number_score = np_status
+                    if pass_result:
+                        self._check_np_db(pass_status)
 
-                    end_time = time.time()
-                    detection_time = round((end_time - start_time) * 1000, 2)
+                        bool_status, license_number, license_number_score = pass_status
 
-                    results[frame_nmb][car_id] = {
-                        "plate": {
-                            "license_plate": license_number,
-                            "vehicle_conf_score": vehicle_bbox_score,
-                            "plate_conf_score": license_number_score,
-                            "detection_time": detection_time,
-                        },
-                    }
+                        end_time = time.time()
+                        detection_time = round((end_time - start_time) * 1000, 2)
 
-                    print(results)
+                        results[frame_nmb] = {
+                            "plate": {
+                                "license_plate": license_number,
+                                "plate_conf_score": license_number_score,
+                                "detection_time": detection_time,
+                            }
+                        }
+
+                        print(results)
+                        pass_car = True
+                        break
+
             frame_nmb += 1
+
         video.release()
         return results
 
@@ -201,8 +194,8 @@ class detect_license_plate:
 if __name__ == "__main__":
     video_path = "video.mp4"
     license_plate_detector = detect_license_plate(
-        conf_score=0.91,
-        max_frames=4,
+        conf_score=0.90,
+        max_fps=15,
         similarity=0.70,
     )
     license_plate_detector.process_video(video_path)
